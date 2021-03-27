@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Labyrinth.cpp">
+    <ClCompile Include="Labyrinth.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
