@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <stdbool.h>
 #include <time.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 
 
 void leseSpielfeld(char*** feld, int* sizeX, int* sizeY);
@@ -39,8 +39,8 @@ void main() {
 	}
 	ausgabeSpielfeld(feld, sizeX, sizeY); //gibt das Spielfeld aus
 	platziereRobo(&position, hConsole, sizeX, sizeY, feld); //fragt den Benutzer, wo der Roboter anfangen soll
-	zeigeRobo();
-	löseLabyrinth(sleeptime);
+	zeigeRobo(&position, hConsole, richtung);
+	löseLabyrinth(&position, hConsole, richtung, sleeptime);
 	for (int i = 0; i < sizeY; i++) //befreit den Speicherplatz des Feldes
 	{
 		free(feld[i]);
@@ -54,7 +54,7 @@ void leseSpielfeld(char*** feld, int* sizeX, int* sizeY)
 
 	FILE* fp;
 
-	fopen_s(&fp, "Labyrinth2.0.txt", "r");
+	fopen_s(&fp, "Labyrinth.txt", "r");
 
 	if (fp == NULL) printf("Datei konnte nicht gelesen werden.");
 
@@ -110,13 +110,13 @@ void ausgabeSpielfeld(char** feld, int sizeX, int sizeY)
 	}
 	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
 }
-löseLabyrinth(int sleeptime)
+löseLabyrinth(COORD* position, HANDLE hConsole, int richtung, int sleeptime)
 {
 	while (/*nicht am Rand*/true)
 	{
 		bewegeRobo();
-		zeigeRobo();
-		sleep(sleeptime);
+		zeigeRobo(position, hConsole, richtung);
+		Sleep(sleeptime);
 	}
 }
 int platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, char** feld)
@@ -138,13 +138,13 @@ int platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, char**
 		printf("\nder Roboter wurde auserhalb des Spielfeldes gespawnt\n");
 		return(-1);
 	}
-	else if (feld[position->X][position->Y] ==  '1') //checkt, ob der Robotor auf einer Wand gespawnt wird
+	else if (feld[position->X][position->Y] == '1') //checkt, ob der Robotor auf einer Wand gespawnt wird
 	{
 		printf("\nder Roboter wurde in einer Wand gespawnt\n");
 		return(-1);
 
 	}
-	
+
 	unterFeld.Y = sizeY + 10; //setzt den Cursor unter das Spielfeld, um es nicht zu beschädigen
 	SetConsoleCursorPosition(hConsole, unterFeld);
 	//printf("                                                                                    \n");
@@ -161,10 +161,27 @@ zeigeRobo(COORD* position, HANDLE hConsole, int richtung)
 	SetConsoleCursorPosition(hConsole, *position);
 	switch (richtung)
 	{
-	case:
+	case 0:
+	{
+		printf("A");
+		break;
+	}	
+	case 1:
+	{
+		printf(">");
+		break;
+	}	
+	case 2:
+	{
+		printf("V");
+		break;
+	}	
+	case 3:
+	{
+		printf("<");
+		break;
+	}
 	default:
 		break;
 	}
-	printf("A");
-
 }

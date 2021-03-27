@@ -20,7 +20,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Labyrinth2.0.txt">
+    <Text Include="Labyrinth.txt">
       <Filter>Resource Files</Filter>
     </Text>
   </ItemGroup>
