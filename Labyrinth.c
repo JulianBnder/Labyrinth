@@ -4,21 +4,19 @@
 #include <time.h>
 #include <stdlib.h>
 
-HANDLE hConsole;
-COORD debugCoord;
 
+COORD debugCoord = { .X = 0, .Y = 12 };
 
 /*
 in main bei der Spielgrößenabfrage checken, ab wann es Probleme gibt und dann ein oberes Limit einbauen (false ersetzen)
 Wenn noch Zeit ist in main beim Funktiosaufruf von platziereRobo und in PlatziereRobo ändern, sodass es nach neuem Input fragt
 	um der Funktionsaufruf das: //while (position.X == 0 && position.Y == 0) //gibt die Möglichkeit die Position neu zu wählen, wenn sie falsch gesetzt wurde
 	oder noch besser while Schleife in der Funktion
-Wenn noch Zeit ist die Sleeptime in der Konsole abfragen
-sleeptime stimmt nicht, Roboter ist nicht schnell genug
+
 */
 void main()
 {
-	pseudomain(50, 1, 1); //Ruft pesudomain() auf mit den Übergabewerten: Geschwindigkeit in n LE pro Sekunde, Startposition x, Startposition y
+	pseudomain(10, 1, 1); //Ruft pesudomain() auf mit den Übergabewerten: Geschwindigkeit in n LE pro Sekunde, Startposition x, Startposition y
 }
 pseudomain(int sleeptemp, int tempX, int tempY)
 {
@@ -52,6 +50,10 @@ pseudomain(int sleeptemp, int tempX, int tempY)
 		free(feld[i]);
 	}
 	free(feld);
+	COORD unterFeld; //Courser für Text
+	unterFeld.X = 0;
+	unterFeld.Y = sizeY + 2; //setzt den Cursor unter das Spielfeld, um es nicht zu beschädigen
+	SetConsoleCursorPosition(hConsole, unterFeld);
 }
 
 leseSpielfeld(int*** feld, int* sizeX, int* sizeY)
@@ -74,7 +76,7 @@ leseSpielfeld(int*** feld, int* sizeX, int* sizeY)
 
 		int** feldTemp; //Speicher für Feld reservieren
 
-		feldTemp = (int**)malloc(*sizeY * sizeof(int*)); //reserviert Speicherplatz für den Array-Array
+		feldTemp = (int**)malloc(*sizeX * sizeof(int*)); //reserviert Speicherplatz für den Array-Array
 		for (int i = 0; i < *sizeX; i++)
 		{
 			feldTemp[i] = (int*)malloc((*sizeY) * sizeof(int)); //reserviert Speicherplatz für die Arrays im Array
@@ -178,7 +180,7 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 	COORD tempCoord;
 	tempCoord.X = 0;
 	tempCoord.Y = 0;
-	BOOL spur;
+	_Bool spur;
 	int ausgänge = 0;
 	int tempRichtung;
 	/*
@@ -284,24 +286,16 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 			break;
 		}
 	} while (feld[tempCoord.X][tempCoord.Y] == 1);
-
-
-	switch (ausgänge)
-	{
-	case 1:
+	spur = true;
+	feld[position->X][position->Y]--;
+	if (feld[position->X][position->Y] <= -ausgänge)
 	{
 		spur = false;
-		break;
-	}	
-	case 2:
-	{
-		feld[position->X][position->Y] = 2 - feld[position->X][position->Y]; //l
-		spur = feld[position->X][position->Y];
 	}
-	default:
-		spur = false;
-		break;
-	}
+
+	//spur = !(--feld[position->X][position->Y] <= -ausgänge);
+
+	debug_f(debugCoord.Y, ausgänge, spur);
 	löscheRobo(position, hConsole, feld, spur);
 	position->X = tempCoord.X;
 	position->Y = tempCoord.Y;
@@ -335,5 +329,18 @@ zeigeRobo(COORD* position, HANDLE hConsole, int richtung)
 	default:
 		printf("Error: keine valide Richtung");
 		break;
+	}
+}
+debug_f(int i, int j, BOOL k)
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	SetConsoleCursorPosition(hConsole, debugCoord);
+	printf("    %d      %d      %d", i, j, k);
+	debugCoord.Y++;
+	if (debugCoord.Y >= 48)
+	{
+		debugCoord.X += 20;
+		debugCoord.Y = 12;
 	}
 }
