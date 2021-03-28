@@ -5,8 +5,6 @@
 #include <stdlib.h>
 
 
-COORD debugCoord = { .X = 0, .Y = 12 };
-
 /*
 in main bei der Spielgrößenabfrage checken, ab wann es Probleme gibt und dann ein oberes Limit einbauen (false ersetzen)
 Wenn noch Zeit ist in main beim Funktiosaufruf von platziereRobo und in PlatziereRobo ändern, sodass es nach neuem Input fragt
@@ -16,7 +14,7 @@ Wenn noch Zeit ist in main beim Funktiosaufruf von platziereRobo und in Platzier
 */
 void main()
 {
-	pseudomain(10, 1, 1); //Ruft pesudomain() auf mit den Übergabewerten: Geschwindigkeit in n LE pro Sekunde, Startposition x, Startposition y
+	pseudomain(20, 1, 1); //Ruft pesudomain() auf mit den Übergabewerten: Geschwindigkeit in n LE pro Sekunde, Startposition x, Startposition y
 }
 pseudomain(int sleeptemp, int tempX, int tempY)
 {
@@ -86,7 +84,7 @@ leseSpielfeld(int*** feld, int* sizeX, int* sizeY)
 			for (int k = 0; k < *sizeX; k++)
 			{
 				feldTemp[k][i] = ((int)fgetc(fp) - 48); //Spielfeld aus Datei in Array schreiben
-				temp = fgetc(fp); //Leerzeichen aus der Datei in temp schreiben
+				temp = fgetc(fp); //Leerzeichen (/Zeilenumbruch) aus der Datei in temp schreiben
 			}
 
 		}
@@ -138,6 +136,7 @@ platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, int** feld
 	unterFeld.X = 0;
 	unterFeld.Y = sizeY + 2; //setzt den Cursor unter das Spielfeld, um es nicht zu beschädigen
 	SetConsoleCursorPosition(hConsole, unterFeld);
+
 	/*printf("Wo soll der Roboter starten? erst X(rechts), Leerzeichen und dann Y-Wert(runter)\n");
 	scanf_s("%d ", &(position->X)); //schreibt den 1. eingegebenen Wert in Posioion.X
 	scanf_s("%d", &(position->Y)); // schreibt den 2. eingegebenen Wert in Posioion.Y
@@ -295,7 +294,7 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 
 	//spur = !(--feld[position->X][position->Y] <= -ausgänge);
 
-	debug_f(debugCoord.Y, ausgänge, spur);
+	//debug_f(debugCoord.Y, ausgänge, spur);
 	löscheRobo(position, hConsole, feld, spur);
 	position->X = tempCoord.X;
 	position->Y = tempCoord.Y;
@@ -329,18 +328,5 @@ zeigeRobo(COORD* position, HANDLE hConsole, int richtung)
 	default:
 		printf("Error: keine valide Richtung");
 		break;
-	}
-}
-debug_f(int i, int j, BOOL k)
-{
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-
-	SetConsoleCursorPosition(hConsole, debugCoord);
-	printf("    %d      %d      %d", i, j, k);
-	debugCoord.Y++;
-	if (debugCoord.Y >= 48)
-	{
-		debugCoord.X += 20;
-		debugCoord.Y = 12;
 	}
 }
