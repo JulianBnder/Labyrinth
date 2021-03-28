@@ -4,7 +4,8 @@
 #include <time.h>
 #include <stdlib.h>
 
-
+HANDLE hConsole;
+COORD debugCoord;
 void leseSpielfeld(char*** feld, int* sizeX, int* sizeY);
 void ausgabeSpielfeld(char** feld, int sizeX, int sizeY);
 
@@ -16,7 +17,7 @@ Wenn noch Zeit ist in main beim Funktiosaufruf von platziereRobo und in Platzier
 Wenn noch Zeit ist die Sleeptime in der Konsole abfragen
 */
 void main() {
-	int sleeptime = 500; //legt fest wie lange er in einer Position ist
+	int sleeptime = 200; //legt fest wie lange er in einer Position ist
 	int richtung = 0; //die Richtung, in die der  Roboter schaut
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD position;
@@ -40,7 +41,7 @@ void main() {
 	ausgabeSpielfeld(feld, sizeX, sizeY); //gibt das Spielfeld aus
 	platziereRobo(&position, hConsole, sizeX, sizeY, feld); //fragt den Benutzer, wo der Roboter anfangen soll
 	zeigeRobo(&position, hConsole, richtung);
-	löseLabyrinth(&position, hConsole, richtung, sleeptime);
+	löseLabyrinth(&position, hConsole, &richtung, sleeptime, sizeX, sizeY, feld);
 	for (int i = 0; i < sizeY; i++) //befreit den Speicherplatz des Feldes
 	{
 		free(feld[i]);
@@ -100,6 +101,11 @@ void ausgabeSpielfeld(char** feld, int sizeX, int sizeY)
 				SetConsoleTextAttribute(hConsole, BACKGROUND_BLUE | BACKGROUND_GREEN); //Hintergrund auf Türkis setzen
 				printf(" ");
 			}
+			else if (feld[k][i] == 'X')
+			{
+				SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
+				printf("X");
+			}
 			else
 			{
 				SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
@@ -110,13 +116,13 @@ void ausgabeSpielfeld(char** feld, int sizeX, int sizeY)
 	}
 	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
 }
-löseLabyrinth(COORD* position, HANDLE hConsole, int richtung, int sleeptime)
+löseLabyrinth(COORD* position, HANDLE hConsole, int *richtung, int sleeptime, int sizeX, int sizeY, char** feld)
 {
-	while (/*nicht am Rand*/true)
+	while (feld[position->X][position->Y] != 'X')
 	{
-		bewegeRobo();
-		zeigeRobo(position, hConsole, richtung);
-		Sleep(sleeptime);
+		bewegeRobo(position, hConsole, richtung, sizeX, sizeY, feld);
+		zeigeRobo(position, hConsole, *richtung);
+		Sleep(sleeptime); //lässt den Roboter für Sleeptime ms in einer Stelle verweilen
 	}
 }
 int platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, char** feld)
@@ -127,10 +133,8 @@ int platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, char**
 	unterFeld.Y = sizeY + 2; //setzt den Cursor unter das Spielfeld, um es nicht zu beschädigen
 	SetConsoleCursorPosition(hConsole, unterFeld);
 	printf("Wo soll der Roboter starten? erst X(rechts), Leerzeichen und dann Y-Wert(runter)\n");
-	scanf_s("%d ", &temp); //schreibt den 1. eingegebenen Wert in temp
-	position->X = temp;  //setzt Posioion.X gleich dem Wert temp
-	scanf_s("%d", &temp); // schreibt den 2. eingegebenen Wert für in temp
-	position->Y = temp; // setzt Posioion.Y gleich dem Wert temp
+	scanf_s("%d ", &(position->X)); //schreibt den 1. eingegebenen Wert in Posioion.X
+	scanf_s("%d", &(position->Y)); // schreibt den 2. eingegebenen Wert in Posioion.Y
 
 
 	if (position->X < 0 || position->Y < 0 || position->X > sizeX || position->Y > sizeY) //checkt, ob der Roboter auserhalb der Spielfeldes gesetzt werden soll
@@ -153,35 +157,122 @@ int platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, char**
 	//printf("                                                                                    \n");
 	//printf("                                                                                    \n");
 }
-bewegeRobo()
-{}
+löscheRobo(COORD* position, HANDLE hConsole, char** feld/*, BOOL spur*/)
+{
+	SetConsoleCursorPosition(hConsole, *position); // setzt die Position auf den Roboter zurück, nachdem sie durch das Schreiben geändert wurde
+	printf(" "); // löscht das Zeichen für den Roboter wieder
+
+}
+bewegeRobo(COORD* position, HANDLE hConsole, int *richtung, int sizeX, int sizeY, char** feld)
+{
+	COORD tempCoord;
+	tempCoord.X = 0;
+	tempCoord.Y = 0;
+	BOOL spur;
+	int ausgänge = 0;
+	int tempRichtung;
+	/*
+	for (int i = -1; i <= 1; i++)
+	{
+		switch ((richtung + i) % 4)
+		{
+		case 0: //Robotor schaut nach oben
+		{
+			if (feld)
+			{
+
+			}
+		}
+		case 1: //Robotor schaut nach rechts
+		{
+			printf(">");
+			break;
+		}
+		case 2: //Robotor schaut nach unten
+		{
+			printf("V");
+			break;
+		}
+		case 3: //Robotor schaut nach links
+		{
+			printf("<");
+			break;
+		}
+		default:
+			break;
+		}
+	}*/
+	*richtung = (*richtung + 2) % 4; //Dreht den Roboter nach hinten, damit er nach der Linksdrehung
+	do
+	{
+		*richtung = (*richtung + 3) % 4; //Dreht den Roboter nach links
+		switch (*richtung)
+		{
+		case 0: //Robotor schaut nach oben
+		{
+			tempCoord.X = position->X;
+			tempCoord.Y = position->Y - 1;
+			break;
+		}
+		case 1: //Robotor schaut nach rechts
+		{
+			tempCoord.X = position->X + 1;
+			tempCoord.Y = position->Y;
+			break;
+		}
+		case 2: //Robotor schaut nach unten
+		{
+			tempCoord.X = position->X;
+			tempCoord.Y = position->Y + 1;
+			break;
+		}
+		case 3: //Robotor schaut nach links
+		{
+			tempCoord.X = position->X - 1;
+			tempCoord.Y = position->Y;
+			break;
+		}
+		default:
+			break;
+		}
+	} while (feld[tempCoord.X][tempCoord.Y] == '1');
+
+	löscheRobo(position, hConsole, feld/*, spur*/);
+	position->X = tempCoord.X;
+	position->Y = tempCoord.Y;
+}
 zeigeRobo(COORD* position, HANDLE hConsole, int richtung)
 {
-	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
+	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); // Vordegrund auf Schwarz setzen
 	SetConsoleCursorPosition(hConsole, *position);
-	switch (richtung)
+	switch (richtung) // Switch case mit der Variable richtung -> Zeigt in Abhängigkeit der Richtung verscheidene Symbole an
 	{
-	case 0:
+	case 0: //Robotor schaut nach oben
 	{
 		printf("A");
 		break;
-	}	
-	case 1:
+	}
+	case 1: //Robotor schaut nach rechts
 	{
 		printf(">");
 		break;
-	}	
-	case 2:
+	}
+	case 2: //Robotor schaut nach unten
 	{
 		printf("V");
 		break;
-	}	
-	case 3:
+	}
+	case 3: //Robotor schaut nach links
 	{
 		printf("<");
 		break;
 	}
 	default:
+		printf("Error: keine valide Richtung");
 		break;
 	}
+}
+debug(int i, int j, int k)
+{
+	SetConsoleCursorPosition(hConsole, debugCoord);
 }
