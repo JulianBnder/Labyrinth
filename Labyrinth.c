@@ -24,7 +24,7 @@ pseudomain(int sleeptemp, int tempX, int tempY)
 	int sizeY = 0;
 
 
-	if (leseLabyrinth(&feld, &sizeX, &sizeY)) //liest das Labyrinth ein
+	if (leseLabyrinth(&feld, &sizeX, &sizeY) != 0) //liest das Labyrinth ein
 	{
 		//setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen und setzt den Vordergrund auf Schwarz
 		position.X = 0;
@@ -34,14 +34,14 @@ pseudomain(int sleeptemp, int tempX, int tempY)
 		return(-1);
 	}
 	ausgabeLabyrinth(feld, sizeX, sizeY); //gibt das Labyrinth aus
-	if (platziereRobo(&position, hConsole, sizeX, sizeY, feld)) //fragt den Benutzer, wo der Roboter anfangen soll
+	if (platziereRobo(&position, hConsole, sizeX, sizeY, feld) != 0) //fragt den Benutzer, wo der Roboter anfangen soll
 	{
 		//setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen und setzt den Vordergrund auf Schwarz
 		position.X = 0;
 		position.Y = sizeY + 5;
 		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 		SetConsoleCursorPosition(hConsole, position);
-		return(-1);
+		return(-2);
 	}
 	zeigeRobo(&position, hConsole, richtung);
 
@@ -92,7 +92,7 @@ leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 	fscanf_s(fp, "%d\n", sizeY);
 
 	// checkt, ab das Labyrinth zu klein ist, um es sinnvoll zu loesen
-	if (sizeX <= 2 || sizeY <= 2)
+	if (*sizeX <= 2 || *sizeY <= 2)
 	{
 		printf("X- und/oder Y-Werte sind zu klein\n");
 		return(-2);
@@ -119,7 +119,6 @@ leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 			feldTemp[k][i] = ((int)fgetc(fp) - 48); //Labyrinth aus Datei in Array schreiben
 			fgetc(fp); //Leerzeichen (und Zeilenumbrüche) aus der Datei ignorieren
 		}
-
 	}
 
 	*feld = feldTemp; //den eigentlichen feld-Array auf den Speicher zeigen lassen
