@@ -6,6 +6,8 @@
 
 
 /*
+* in Word Dokument bewegeRobo nochmal durchschauen und alles an neuen Code anpassen
+* 
 in main bei der Spielgroeßenabfrage checken, ab wann es Probleme gibt und dann ein oberes Limit einbauen (false ersetzen)
 Wenn noch Zeit ist in main beim Funktiosaufruf von platziereRobo und in PlatziereRobo aendern, sodass es nach neuem Input fragt
 	um der Funktionsaufruf das: //while (position.X == 0 && position.Y == 0) //gibt die Moeglichkeit die Position neu zu waehlen, wenn sie falsch gesetzt wurde
@@ -91,7 +93,6 @@ Rückgabewerte:
 ******************************************************************************************************/
 int leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 {
-	int temp;
 	int** feldTemp; //Temporärer Pointer für malloc
 	FILE* fp;
 
@@ -103,8 +104,6 @@ int leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 		return(-1);
 	}
 
-	else
-	{
 		fscanf_s(fp, "%d ", sizeX);
 		fscanf_s(fp, "%d\n", sizeY);
 
@@ -131,13 +130,12 @@ int leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 			for (int k = 0; k < *sizeX; k++)
 			{
 				feldTemp[k][i] = ((int)fgetc(fp) - 48); //Labyrinth aus Datei in Array schreiben
-				temp = fgetc(fp); //Leerzeichen (/Zeilenumbrüche) aus der Datei ignorieren
+				fgetc(fp); //Leerzeichen (/Zeilenumbrüche) aus der Datei ignorieren
 			}
 
 		}
 
 		*feld = feldTemp; //den eigentlichen feld-Array auf den Speicher zeigen lassen
-	}
 	fclose(fp); //schliest die Datei wieder
 	return(0);
 }
@@ -198,29 +196,6 @@ Rückgabewerte:
  0				Alles ok
 -1
 ******************************************************************************************************/
-loeseLabyrinth(COORD* position, HANDLE hConsole, int* richtung, int sleeptime, int sizeX, int sizeY, int** feld)
-{
-	while (feld[position->X][position->Y] != 40) // 40 = (int)"X" - 48
-	{
-		bewegeRobo(position, hConsole, richtung, sizeX, sizeY, feld);
-		zeigeRobo(position, hConsole, *richtung);
-		Sleep(sleeptime); //laesst den Roboter für Sleeptime ms in einer Stelle verweilen
-	}
-}
-
-/******************************************************************************************************
-[Beschreibung]
-
-[Längere Beschreibung]
-
-Parameter:
-call by reference / value
-var				Beschreibung
-
-Rückgabewerte:
- 0				Alles ok
--1
-******************************************************************************************************/
 platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, int** feld)
 {
 	COORD unterFeld; //Courser für Text
@@ -253,6 +228,29 @@ platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, int** feld
 	//printf("                                                                                    \n");
 	//printf("                                                                                    \n");
 	//printf("                                                                                    \n");
+}
+
+/******************************************************************************************************
+[Beschreibung]
+
+[Längere Beschreibung]
+
+Parameter:
+call by reference / value
+var				Beschreibung
+
+Rückgabewerte:
+ 0				Alles ok
+-1
+******************************************************************************************************/
+loeseLabyrinth(COORD* position, HANDLE hConsole, int* richtung, int sleeptime, int sizeX, int sizeY, int** feld)
+{
+	while (feld[position->X][position->Y] != 40) // 40 = (int)"X" - 48
+	{
+		bewegeRobo(position, hConsole, richtung, sizeX, sizeY, feld);
+		zeigeRobo(position, hConsole, *richtung);
+		Sleep(sleeptime); //laesst den Roboter für Sleeptime ms in einer Stelle verweilen
+	}
 }
 
 /******************************************************************************************************
