@@ -8,14 +8,15 @@
 
 void main()
 {
-	return(pseudomain(4, 1, 2));
 	//Parameter: Geschwindigkeit in LE pro Sekunde, Startposition x, Startposition y
+	return(pseudomain(43, 1, 2));
+
 }
 
 pseudomain(int sleeptemp, int tempX, int tempY)
 {
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD position = { .X = tempX, .Y = tempY }; // legt die Koordinaten für den Roboter fest
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); // Intialisierung für Konsolenausgabe
+	COORD position = { .X = tempX, .Y = tempY }; // legt die Startoordinaten für den Roboter fest
 	int richtung = 0; //0 = obern; 1 = rechts; 2 = unten; 3 = links
 	int sleeptime = 1000 / sleeptemp; //legt fest wie lange er in einer Position ist
 	int** feld;
@@ -26,9 +27,10 @@ pseudomain(int sleeptemp, int tempX, int tempY)
 	ausgabeLabyrinth(feld, sizeX, sizeY); //gibt das Labyrinth aus
 	if (platziereRobo(&position, hConsole, sizeX, sizeY, feld)) //fragt den Benutzer, wo der Roboter anfangen soll
 	{
+		//setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen und setzt den Vordergrund auf Schwarz
 		position.X = 0;
-		position.Y = sizeY + 5; //setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen
-		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
+		position.Y = sizeY + 5;
+		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 		SetConsoleCursorPosition(hConsole, position);
 		return(-1);
 	}
@@ -37,19 +39,20 @@ pseudomain(int sleeptemp, int tempX, int tempY)
 
 	loeseLabyrinth(&position, hConsole, &richtung, sleeptime, sizeX, sizeY, feld);
 
-
-	for (int i = 0; i < sizeX; i++) //befreit den Speicherplatz des Feldes
+	//befreit den Speicherplatz des Feldes
+	for (int i = 0; i < sizeX; i++) 
 	{
 		free(feld[i]);
 	}
 	free(feld);
 
-	//{ //macht den Anfangspunkt des Roboters rot, weil der sonst schwarz ist, wenn der Roboter in einer Sackgasse startet
-	//	position.X = tempX;
-	//	position.Y = tempY;
-	//	SetConsoleTextAttribute(hConsole, BACKGROUND_RED); //Hintergrund auf rot setzen
-	//	printf(" ");
-	//}
+	{ //macht den anfangspunkt des roboters rot, weil der sonst schwarz ist, wenn der roboter in einer sackgasse startet
+		position.X = tempX;
+		position.Y = tempY;
+		SetConsoleTextAttribute (hConsole, BACKGROUND_RED); //Hintergrund auf rot setzen
+		SetConsoleCursorPosition(hConsole, position);
+		printf(" ");
+	}
 
 	position.X = 0;
 	position.Y = sizeY + 5; //setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen
