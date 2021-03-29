@@ -71,6 +71,7 @@ int pseudomain(int sleeptemp, int tempX, int tempY)
 	position.X = 0;
 	position.Y = sizeY + 2; //setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen
 	SetConsoleCursorPosition(hConsole, position);
+	return(0);
 }
 
 /******************************************************************************************************
@@ -115,7 +116,7 @@ int leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 		else if (false) // checkt, ob das Labyrinth so groﬂ ist, dass es Probleme verursacht
 		{
 			printf("X- und/oder Y-Werte sind zu groﬂ\n");
-			return(-1);
+			return(-3);
 		}
 
 
@@ -300,88 +301,37 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 	_Bool spur;
 	int ausgaenge = 0;
 	int tempRichtung;
-	/*
-	for (int i = -1; i <= 1; i++)
-	{
-		switch ((richtung + i) % 4)
-		{
-		case 0: //Robotor schaut nach oben
-		{
-			if (feld)
-			{
 
-			}
-		}
-		case 1: //Robotor schaut nach rechts
-		{
-			printf(">");
-			break;
-		}
-		case 2: //Robotor schaut nach unten
-		{
-			printf("V");
-			break;
-		}
-		case 3: //Robotor schaut nach links
-		{
-			printf("<");
-			break;
-		}
-		default:
-			break;
-		}
-	}*/
-	for (int i = 0; i < 4; i++) // zaehlt, in wie viele Richtungen der Roboter gehen kann
-	{
-		switch (i)
-		{
 
-		case 0: //Robotor schaut nach oben
-		{
-			tempCoord.X = position->X;
-			tempCoord.Y = position->Y - 1;
-			break;
-		}
-		case 1: //Robotor schaut nach rechts
-		{
-			tempCoord.X = position->X + 1;
-			tempCoord.Y = position->Y;
-			break;
-		}
-		case 2: //Robotor schaut nach unten
-		{
-			tempCoord.X = position->X;
-			tempCoord.Y = position->Y + 1;
-			break;
-		}
-		case 3: //Robotor schaut nach links
-		{
-			tempCoord.X = position->X - 1;
-			tempCoord.Y = position->Y;
-			break;
-		}
-		default:
-			break;
-		}
-		if (feld[tempCoord.X][tempCoord.Y] != 1) //checkt, ob in die Richtung ein Weg ist
+	{ // Z‰hlt, wie viele Wege neben dem Feld sind, auf dem der Roboter ist
+		if (feld[position->X - 1][position->Y] != 1) //checkt, ob links ein Weg ist
 		{
 			ausgaenge++;
 		}
+		if (feld[position->X + 1][position->Y] != 1) //checkt, ob rechts ein Weg ist
+		{
+			ausgaenge++;
+		}
+		if (feld[position->X][position->Y - 1] != 1) //checkt, ob oben ein Weg ist
+		{
+			ausgaenge++;
+		}
+		if (feld[position->X][position->Y + 1] != 1) //checkt, ob unten ein Weg ist
+		{
+			ausgaenge++;
+		}
+	}
 
+	feld[position->X][position->Y]--; // z‰hlt wie oft der Roboter auf einem Feld war, es z‰hlt negativ, weil der Roboter denken w¸rde es ist eine Wand, wenn es 1 werden w¸rde
+	spur = true; // generell zieht der Roboter eine Spur hinter sich her
+	if (-(feld[position->X][position->Y]) >= ausgaenge) // auser er war so oft da, wie es benachberte Wege hat, dann dann geht er dahin zur¸ck, wo er hergekommen ist und es war eine Sackgasse
+	{
+		spur = false;
 	}
 
 
-
-
-
-
-
-
-
-
-
 	* richtung = (*richtung + 2) % 4; //Dreht den Roboter nach hinten, damit er nach der Linksdrehung nach Rechts schaut
-	do
+	while (feld[tempCoord.X][tempCoord.Y] == 1)
 	{
 		*richtung = (*richtung + 3) % 4; //Dreht den Roboter nach links
 		switch (*richtung)
@@ -413,17 +363,10 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 		default:
 			break;
 		}
-	} while (feld[tempCoord.X][tempCoord.Y] == 1);
-	spur = true;
-	feld[position->X][position->Y]--;
-	if (feld[position->X][position->Y] <= -ausgaenge)
-	{
-		spur = false;
-	}
+	} ;
 
 	//spur = !(--feld[position->X][position->Y] <= -ausgaenge);
 
-	//debug_f(debugCoord.Y, ausgaenge, spur);
 	loescheRobo(position, hConsole, feld, spur);
 	position->X = tempCoord.X;
 	position->Y = tempCoord.Y;
