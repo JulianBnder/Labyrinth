@@ -6,13 +6,13 @@
 
 
 
-int main()
+void main()
 {
-	return(pseudomain(1000, 1, 1));
+	return(pseudomain(4, 1, 2));
 	//Parameter: Geschwindigkeit in LE pro Sekunde, Startposition x, Startposition y
 }
 
-int pseudomain(int sleeptemp, int tempX, int tempY)
+pseudomain(int sleeptemp, int tempX, int tempY)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD position = { .X = tempX, .Y = tempY }; // legt die Koordinaten für den Roboter fest
@@ -24,7 +24,14 @@ int pseudomain(int sleeptemp, int tempX, int tempY)
 
 	leseLabyrinth(&feld, &sizeX, &sizeY); //liest das Labyrinth ein
 	ausgabeLabyrinth(feld, sizeX, sizeY); //gibt das Labyrinth aus
-	platziereRobo(&position, hConsole, sizeX, sizeY, feld); //fragt den Benutzer, wo der Roboter anfangen soll
+	if (platziereRobo(&position, hConsole, sizeX, sizeY, feld)) //fragt den Benutzer, wo der Roboter anfangen soll
+	{
+		position.X = 0;
+		position.Y = sizeY + 5; //setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen
+		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
+		SetConsoleCursorPosition(hConsole, position);
+		return(-1);
+	}
 	zeigeRobo(&position, hConsole, richtung);
 
 
@@ -45,14 +52,14 @@ int pseudomain(int sleeptemp, int tempX, int tempY)
 	//}
 
 	position.X = 0;
-	position.Y = sizeY + 2; //setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen
+	position.Y = sizeY + 5; //setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen
 	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
 	SetConsoleCursorPosition(hConsole, position);
 
 	return(0);
 }
 
-int leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
+leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 {
 	int** feldTemp; //Temporärer Pointer für malloc
 	FILE* fp; // Pointer auf die Datei, die gelesen wird
@@ -130,6 +137,7 @@ ausgabeLabyrinth(int** feld, int sizeX, int sizeY)
 		}
 		printf("\n");
 	}
+	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
 }
 
 platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, int** feld)
@@ -155,6 +163,10 @@ platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, int** feld
 		printf("\nder Roboter wurde in einer Wand gespawnt\n");
 		return(-1);
 
+	}
+	else
+	{
+		return(0);
 	}
 }
 
@@ -222,7 +234,7 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 		{
 		case 0: //Robotor schaut nach oben
 		{
-			tempCoord.X = position->X; 
+			tempCoord.X = position->X;
 			tempCoord.Y = position->Y - 1;
 			break;
 		}
