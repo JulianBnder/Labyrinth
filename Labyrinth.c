@@ -5,51 +5,18 @@
 #include <stdlib.h>
 
 
-/*
-* in Word Dokument bewegeRobo nochmal durchschauen und alles an neuen Code anpassen
-* 
-in main bei der Spielgroeßenabfrage checken, ab wann es Probleme gibt und dann ein oberes Limit einbauen (false ersetzen)
-Wenn noch Zeit ist in main beim Funktiosaufruf von platziereRobo und in PlatziereRobo aendern, sodass es nach neuem Input fragt
-	um der Funktionsaufruf das: //while (position.X == 0 && position.Y == 0) //gibt die Moeglichkeit die Position neu zu waehlen, wenn sie falsch gesetzt wurde
-	oder noch besser while Schleife in der Funktion
 
-Feldtemp vielleicht nicht nehmen und durch *Feld ersetzen
-*/
-/******************************************************************************************************
-Hauptfunktion
-
-Ruft die pseudomain Funktion auf, damit diese mit Parametern arbeiten kann
-
-Rückgabewerte:
-siehe Pseudomain
-******************************************************************************************************/
 int main()
 {
 	return(pseudomain(1000, 1, 1));
 	//Parameter: Geschwindigkeit in LE pro Sekunde, Startposition x, Startposition y
 }
 
-/******************************************************************************************************
-die eingentliche Mainfunktion
-
-ruft andere Funktionen auf, die Variablen, die sonst global implementiert werden würden sind hier als
-lokale Variablen gespeichert
-
-Parameter:
-Die Parameter werden alle mit call by value übergeben, weil die Werte in der main egal sind
-int sleeptemp			Wie schnell der Roboter sich bewegen soll in LE pro Sekunde
-int tempX				X-Koordinate des Roboters
-int tempY				Y-Koordinate des Roboters
-
-Rückgabewerte:
- 0				Alles ok
--1
-******************************************************************************************************/
 int pseudomain(int sleeptemp, int tempX, int tempY)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD position = { .X = tempX, .Y = tempY }; // legt die Koordinaten für den Roboter fest
-	int richtung = 0;
+	int richtung = 0; //0 = obern; 1 = rechts; 2 = unten; 3 = links
 	int sleeptime = 1000 / sleeptemp; //legt fest wie lange er in einer Position ist
 	int** feld;
 	int sizeX = 0;
@@ -70,33 +37,27 @@ int pseudomain(int sleeptemp, int tempX, int tempY)
 	}
 	free(feld);
 
+	//{ //macht den Anfangspunkt des Roboters rot, weil der sonst schwarz ist, wenn der Roboter in einer Sackgasse startet
+	//	position.X = tempX;
+	//	position.Y = tempY;
+	//	SetConsoleTextAttribute(hConsole, BACKGROUND_RED); //Hintergrund auf rot setzen
+	//	printf(" ");
+	//}
+
 	position.X = 0;
 	position.Y = sizeY + 2; //setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen
+	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
 	SetConsoleCursorPosition(hConsole, position);
+
 	return(0);
 }
 
-/******************************************************************************************************
-Liest die Datei Labyrinth.txt aus und speichert sie in einem Array
-
-Parameter:
-Alle Parameter werden durch call by reference übergeben, weil die Funktion dem Programm Informationen
-bereitstellt und deshalb in die "generellen" Variablen schreibt
-int*** feld				Der Doppelpointer/2D-Array, der auf das Labyrinth zeigt
-int* sizeX /sizeY		Die Größe des Labyrinths in X-/Y-Richtung
-
-Rückgabewerte:
- 0				Alles ok
--1				Datei konnte nicht gelesen werden
--2				Das Angegebene Spielfeld ist zu klein
--3				Das Angegebene Spielfeld ist zu groß (noch nicht implementiert)
-******************************************************************************************************/
 int leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 {
 	int** feldTemp; //Temporärer Pointer für malloc
-	FILE* fp;
+	FILE* fp; // Pointer auf die Datei, die gelesen wird
 
-	fopen_s(&fp, "Labyrinth.txt", "r");
+	fopen_s(&fp, "Labyrinth.txt", "r"); //setzt den Pointer auf den Anfang des Textes in der Datei
 
 	if (fp == NULL) //Fehlermeldung, wenn die Datei nicht geöffnet werden konnte
 	{
@@ -104,98 +65,73 @@ int leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 		return(-1);
 	}
 
-		fscanf_s(fp, "%d ", sizeX);
-		fscanf_s(fp, "%d\n", sizeY);
+	fscanf_s(fp, "%d ", sizeX); // die Dimensionen des Labyrinths in X- und Y-Richtung werden als Zahlen eingelesen
+	fscanf_s(fp, "%d\n", sizeY);
 
-		if (sizeX <= 2 || sizeY <= 2)// checkt, ab das Labyrinth zu klein ist, um es sinnvoll zu loesen
+	if (sizeX <= 2 || sizeY <= 2)// checkt, ab das Labyrinth zu klein ist, um es sinnvoll zu loesen
+	{
+		printf("X- und/oder Y-Werte sind zu klein\n");
+		return(-2);
+	}
+	else if (false) // checkt, ob das Labyrinth so groß ist, dass es Probleme verursacht
+	{
+		printf("X- und/oder Y-Werte sind zu groß\n");
+		return(-3);
+	}
+
+
+
+	feldTemp = (int**)malloc(*sizeX * sizeof(int*)); //reserviert Speicherplatz für den Array-Array
+	for (int i = 0; i < *sizeX; i++)
+	{
+		feldTemp[i] = (int*)malloc((*sizeY) * sizeof(int)); //reserviert Speicherplatz für die Arrays im  äuseren Array
+	}
+	for (int i = 0; i < *sizeY; i++) // geht das Labyrinth durch
+	{
+		for (int k = 0; k < *sizeX; k++)
 		{
-			printf("X- und/oder Y-Werte sind zu klein\n");
-			return(-2);
-		}
-		else if (false) // checkt, ob das Labyrinth so groß ist, dass es Probleme verursacht
-		{
-			printf("X- und/oder Y-Werte sind zu groß\n");
-			return(-3);
-		}
-
-
-
-		feldTemp = (int**)malloc(*sizeX * sizeof(int*)); //reserviert Speicherplatz für den Array-Array
-		for (int i = 0; i < *sizeX; i++)
-		{
-			feldTemp[i] = (int*)malloc((*sizeY) * sizeof(int)); //reserviert Speicherplatz für die Arrays im  äuseren Array
-		}
-		for (int i = 0; i < *sizeY; i++) // geht das Labyrinth durch
-		{
-			for (int k = 0; k < *sizeX; k++)
-			{
-				feldTemp[k][i] = ((int)fgetc(fp) - 48); //Labyrinth aus Datei in Array schreiben
-				fgetc(fp); //Leerzeichen (/Zeilenumbrüche) aus der Datei ignorieren
-			}
-
+			feldTemp[k][i] = ((int)fgetc(fp) - 48); //Labyrinth aus Datei in Array schreiben
+			fgetc(fp); //Leerzeichen (und Zeilenumbrüche) aus der Datei ignorieren
 		}
 
-		*feld = feldTemp; //den eigentlichen feld-Array auf den Speicher zeigen lassen
+	}
+
+	*feld = feldTemp; //den eigentlichen feld-Array auf den Speicher zeigen lassen
 	fclose(fp); //schliest die Datei wieder
 	return(0);
 }
 
-/******************************************************************************************************
-[Beschreibung]
-
-[Längere Beschreibung]
-
-Parameter:
-call by reference / value
-var				Beschreibung
-
-Rückgabewerte:
- 0				Alles ok
--1
-******************************************************************************************************/
 ausgabeLabyrinth(int** feld, int sizeX, int sizeY)
 {
-	HANDLE hConsole;
-	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); //Initialisierung für die Ausgabe über die Konsole
 
-	for (int i = 0; i < sizeY; i++) //
+	for (int i = 0; i < sizeY; i++) //Zeigt das Labyrinth auf dem Spielfeld an
 	{
 		for (int k = 0; k < sizeX; k++)
 		{
-			if (feld[k][i] == 1)
+			if (feld[k][i] == 1) // Bei einer Wand
 			{
 				SetConsoleTextAttribute(hConsole, BACKGROUND_BLUE | BACKGROUND_GREEN); //Hintergrund auf Türkis setzen
 				printf(" ");
 			}
-			else if (feld[k][i] == 40) // 40 = (int)"X" - 48
-			{
-				SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
-				printf("X");
-			}
-			else
+			else // in einem Gang
 			{
 				SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
-				printf(" ");
+
+				if (feld[k][i] == 40) // 40 = ((int)"X") - 48
+				{
+					printf("X");
+				}
+				else
+				{
+					printf(" ");
+				}
 			}
 		}
 		printf("\n");
 	}
-	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
 }
 
-/******************************************************************************************************
-[Beschreibung]
-
-[Längere Beschreibung]
-
-Parameter:
-call by reference / value
-var				Beschreibung
-
-Rückgabewerte:
- 0				Alles ok
--1
-******************************************************************************************************/
 platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, int** feld)
 {
 	COORD unterFeld; //Courser für Text
@@ -220,85 +156,35 @@ platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, int** feld
 		return(-1);
 
 	}
-
-	unterFeld.Y = sizeY + 10; //setzt den Cursor unter des Labyrinth, um es nicht zu beschaedigen
-	SetConsoleCursorPosition(hConsole, unterFeld);
-	//printf("                                                                                    \n");
-	//printf("                                                                                    \n");
-	//printf("                                                                                    \n");
-	//printf("                                                                                    \n");
-	//printf("                                                                                    \n");
 }
 
-/******************************************************************************************************
-[Beschreibung]
-
-[Längere Beschreibung]
-
-Parameter:
-call by reference / value
-var				Beschreibung
-
-Rückgabewerte:
- 0				Alles ok
--1
-******************************************************************************************************/
 loeseLabyrinth(COORD* position, HANDLE hConsole, int* richtung, int sleeptime, int sizeX, int sizeY, int** feld)
 {
-	while (feld[position->X][position->Y] != 40) // 40 = (int)"X" - 48
+	while (feld[position->X][position->Y] != 40) // 40 = (int)"X" - 48 also  Wärend das Ziel noch nicht gefunden wurde wird weitergesucht
 	{
-		bewegeRobo(position, hConsole, richtung, sizeX, sizeY, feld);
+		bewegeRobo(position, hConsole, richtung, sizeX, sizeY, feld); //in der Funktion wird auch an der alten Stelle der Roboter in der Konsole gelöscht
 		zeigeRobo(position, hConsole, *richtung);
-		Sleep(sleeptime); //laesst den Roboter für Sleeptime ms in einer Stelle verweilen
+		Sleep(sleeptime); //laesst den Roboter für [Sleeptime] ms in einer Stelle verweilen
 	}
 }
 
-/******************************************************************************************************
-[Beschreibung]
-
-[Längere Beschreibung]
-
-Parameter:
-call by reference / value
-var				Beschreibung
-
-Rückgabewerte:
- 0				Alles ok
--1
-******************************************************************************************************/
 loescheRobo(COORD* position, HANDLE hConsole, int** feld, BOOL spur)
 {
-	if (spur)
+	if (spur) //wenn das Feld, auf dem der Roboter ist, ein Teil des kürzesten Weges ist
 	{
 		SetConsoleTextAttribute(hConsole, BACKGROUND_RED); //Hintergrund auf rot setzen
 	}
-	SetConsoleCursorPosition(hConsole, *position); // setzt die Position auf den Roboter zurück, nachdem sie durch das Schreiben geaendert wurde
+	SetConsoleCursorPosition(hConsole, *position); // setzt die Position auf den Roboter zurück, nachdem sie durch das Schreiben eins nach rechts verschoben wurde
 	printf(" "); // loescht das Zeichen für den Roboter wieder
 	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
 
 }
 
-/******************************************************************************************************
-[Beschreibung]
-
-[Längere Beschreibung]
-
-Parameter:
-call by reference / value
-var				Beschreibung
-
-Rückgabewerte:
- 0				Alles ok
--1
-******************************************************************************************************/
 bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY, int** feld)
 {
-	COORD tempCoord;
-	tempCoord.X = 0;
-	tempCoord.Y = 0;
-	_Bool spur;
-	int ausgaenge = 0;
-	int tempRichtung;
+	COORD tempCoord = { .X = 0, .Y = 0 }; // temporäre Koordinate für Bewegung
+	_Bool spur; // ob eine Spur gezogen werden soll
+	int ausgaenge = 0; // Zähler für die Wege, die neben dem derzeitigen Weg liegen
 
 
 	{ // Zählt, wie viele Wege neben dem Feld sind, auf dem der Roboter ist
@@ -328,15 +214,15 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 	}
 
 
-	* richtung = (*richtung + 2) % 4; //Dreht den Roboter nach hinten, damit er nach der Linksdrehung nach Rechts schaut
+	*richtung = (*richtung + 2) % 4; //Dreht den Roboter nach hinten, damit er nach der 1. Linksdrehung nach Rechts schaut
 	while (feld[tempCoord.X][tempCoord.Y] == 1)
 	{
 		*richtung = (*richtung + 3) % 4; //Dreht den Roboter nach links
-		switch (*richtung)
+		switch (*richtung) // setzt jeweils die temporäre Koordinate für die while-Abfrage
 		{
 		case 0: //Robotor schaut nach oben
 		{
-			tempCoord.X = position->X;
+			tempCoord.X = position->X; 
 			tempCoord.Y = position->Y - 1;
 			break;
 		}
@@ -361,7 +247,7 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 		default:
 			break;
 		}
-	} ;
+	};
 
 	//spur = !(--feld[position->X][position->Y] <= -ausgaenge);
 
@@ -370,19 +256,6 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 	position->Y = tempCoord.Y;
 }
 
-/******************************************************************************************************
-[Beschreibung]
-
-[Längere Beschreibung]
-
-Parameter:
-call by reference / value
-var				Beschreibung
-
-Rückgabewerte:
- 0				Alles ok
--1
-******************************************************************************************************/
 zeigeRobo(COORD* position, HANDLE hConsole, int richtung)
 {
 	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); // Vordegrund auf Schwarz setzen
@@ -411,6 +284,7 @@ zeigeRobo(COORD* position, HANDLE hConsole, int richtung)
 	}
 	default:
 		printf("Error: keine valide Richtung");
+		return(-1);
 		break;
 	}
 }
