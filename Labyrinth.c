@@ -17,13 +17,22 @@ pseudomain(int sleeptemp, int tempX, int tempY)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE); // Intialisierung für Konsolenausgabe
 	COORD position = { .X = tempX, .Y = tempY }; // legt die Startoordinaten für den Roboter fest
-	int richtung = 0; //0 = obern; 1 = rechts; 2 = unten; 3 = links
+	int richtung = 0; //0 = oben; 1 = rechts; 2 = unten; 3 = links
 	int sleeptime = 1000 / sleeptemp; //legt fest wie lange er in einer Position ist
 	int** feld;
 	int sizeX = 0;
 	int sizeY = 0;
 
-	leseLabyrinth(&feld, &sizeX, &sizeY); //liest das Labyrinth ein
+
+	if (leseLabyrinth(&feld, &sizeX, &sizeY)) //liest das Labyrinth ein
+	{
+		//setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen und setzt den Vordergrund auf Schwarz
+		position.X = 0;
+		position.Y = sizeY + 5;
+		SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
+		SetConsoleCursorPosition(hConsole, position);
+		return(-1);
+	}
 	ausgabeLabyrinth(feld, sizeX, sizeY); //gibt das Labyrinth aus
 	if (platziereRobo(&position, hConsole, sizeX, sizeY, feld)) //fragt den Benutzer, wo der Roboter anfangen soll
 	{
@@ -36,27 +45,28 @@ pseudomain(int sleeptemp, int tempX, int tempY)
 	}
 	zeigeRobo(&position, hConsole, richtung);
 
-
+	// läst das Labyrinth
 	loeseLabyrinth(&position, hConsole, &richtung, sleeptime, sizeX, sizeY, feld);
 
+
 	//befreit den Speicherplatz des Feldes
-	for (int i = 0; i < sizeX; i++) 
+	for (int i = 0; i < sizeX; i++)
 	{
 		free(feld[i]);
 	}
 	free(feld);
 
-	{ //macht den anfangspunkt des roboters rot, weil der sonst schwarz ist, wenn der roboter in einer sackgasse startet
-		position.X = tempX;
-		position.Y = tempY;
-		SetConsoleTextAttribute (hConsole, BACKGROUND_RED); //Hintergrund auf rot setzen
-		SetConsoleCursorPosition(hConsole, position);
-		printf(" ");
-	}
+	//Der Startpunkt wird rot gemacht
+	position.X = tempX;
+	position.Y = tempY;
+	SetConsoleCursorPosition(hConsole, position);
+	SetConsoleTextAttribute(hConsole, BACKGROUND_RED);
+	printf(" ");
 
+	//setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen und den Hintergrund Schwarz
 	position.X = 0;
-	position.Y = sizeY + 5; //setzt den Cursor unter das Labyrinth, um es nicht zu beschaedigen
-	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
+	position.Y = sizeY + 5;
+	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 	SetConsoleCursorPosition(hConsole, position);
 
 	return(0);
@@ -67,35 +77,41 @@ leseLabyrinth(int*** feld, int* sizeX, int* sizeY)
 	int** feldTemp; //Temporärer Pointer für malloc
 	FILE* fp; // Pointer auf die Datei, die gelesen wird
 
-	fopen_s(&fp, "Labyrinth.txt", "r"); //setzt den Pointer auf den Anfang des Textes in der Datei
+	//setzt den Pointer auf den Anfang des Textes in der Datei
+	fopen_s(&fp, "Labyrinth.txt", "r");
 
-	if (fp == NULL) //Fehlermeldung, wenn die Datei nicht geöffnet werden konnte
+	//Fehlermeldung, wenn die Datei nicht geöffnet werden konnte
+	if (fp == NULL)
 	{
 		printf("Datei konnte nicht gelesen werden.");
 		return(-1);
 	}
 
-	fscanf_s(fp, "%d ", sizeX); // die Dimensionen des Labyrinths in X- und Y-Richtung werden als Zahlen eingelesen
+	// die Dimensionen des Labyrinths in X- und Y-Richtung werden als Zahlen eingelesen
+	fscanf_s(fp, "%d ", sizeX);
 	fscanf_s(fp, "%d\n", sizeY);
 
-	if (sizeX <= 2 || sizeY <= 2)// checkt, ab das Labyrinth zu klein ist, um es sinnvoll zu loesen
+	// checkt, ab das Labyrinth zu klein ist, um es sinnvoll zu loesen
+	if (sizeX <= 2 || sizeY <= 2)
 	{
 		printf("X- und/oder Y-Werte sind zu klein\n");
 		return(-2);
 	}
-	else if (false) // checkt, ob das Labyrinth so groß ist, dass es Probleme verursacht
+	// checkt, ob das Labyrinth so groß ist, dass es Probleme verursacht
+	else if (false)
 	{
 		printf("X- und/oder Y-Werte sind zu groß\n");
 		return(-3);
 	}
 
 
-
-	feldTemp = (int**)malloc(*sizeX * sizeof(int*)); //reserviert Speicherplatz für den Array-Array
+	//reserviert Speicherplatz für den Array-Array und für die Arrays in dem Array
+	feldTemp = (int**)malloc(*sizeX * sizeof(int*));
 	for (int i = 0; i < *sizeX; i++)
 	{
-		feldTemp[i] = (int*)malloc((*sizeY) * sizeof(int)); //reserviert Speicherplatz für die Arrays im  äuseren Array
+		feldTemp[i] = (int*)malloc((*sizeY) * sizeof(int));
 	}
+
 	for (int i = 0; i < *sizeY; i++) // geht das Labyrinth durch
 	{
 		for (int k = 0; k < *sizeX; k++)
@@ -126,7 +142,8 @@ ausgabeLabyrinth(int** feld, int sizeX, int sizeY)
 			}
 			else // in einem Gang
 			{
-				SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
+				//Hintergrund auf Schwarz setzen
+				SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 
 				if (feld[k][i] == 40) // 40 = ((int)"X") - 48
 				{
@@ -155,17 +172,17 @@ platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, int** feld
 	scanf_s("%d", &(position->Y)); // schreibt den 2. eingegebenen Wert in Posioion.Y
 	*/
 
-
-	if (position->X < 0 || position->Y < 0 || position->X > sizeX || position->Y > sizeY) //checkt, ob der Roboter auserhalb des Labyrinthes gesetzt werden soll
+	//checkt, ob der Roboter auserhalb des Labyrinthes gesetzt werden soll
+	if (position->X < 0 || position->Y < 0 || position->X > sizeX || position->Y > sizeY)
 	{
 		printf("\nder Roboter wurde auserhalb des Labyrinths gespawnt\n");
 		return(-1);
 	}
-	else if (feld[position->X][position->Y] == 1) //checkt, ob der Robotor auf einer Wand gespawnt wird
+	//checkt, ob der Robotor auf einer Wand gespawnt wird
+	else if (feld[position->X][position->Y] == 1)
 	{
 		printf("\nder Roboter wurde in einer Wand gespawnt\n");
 		return(-1);
-
 	}
 	else
 	{
@@ -175,9 +192,11 @@ platziereRobo(COORD* position, HANDLE hConsole, int sizeX, int sizeY, int** feld
 
 loeseLabyrinth(COORD* position, HANDLE hConsole, int* richtung, int sleeptime, int sizeX, int sizeY, int** feld)
 {
-	while (feld[position->X][position->Y] != 40) // 40 = (int)"X" - 48 also  Wärend das Ziel noch nicht gefunden wurde wird weitergesucht
+	// 40 = (int)"X" - 48 also  Wärend das Ziel noch nicht gefunden wurde wird weitergesucht
+	while (feld[position->X][position->Y] != 40)
 	{
-		bewegeRobo(position, hConsole, richtung, sizeX, sizeY, feld); //in der Funktion wird auch an der alten Stelle der Roboter in der Konsole gelöscht
+		//in bewegeRobo wird auch an der alten Stelle der Roboter in der Konsole gelöscht
+		bewegeRobo(position, hConsole, richtung, sizeX, sizeY, feld);
 		zeigeRobo(position, hConsole, *richtung);
 		Sleep(sleeptime); //laesst den Roboter für [Sleeptime] ms in einer Stelle verweilen
 	}
@@ -189,10 +208,10 @@ loescheRobo(COORD* position, HANDLE hConsole, int** feld, BOOL spur)
 	{
 		SetConsoleTextAttribute(hConsole, BACKGROUND_RED); //Hintergrund auf rot setzen
 	}
-	SetConsoleCursorPosition(hConsole, *position); // setzt die Position auf den Roboter zurück, nachdem sie durch das Schreiben eins nach rechts verschoben wurde
-	printf(" "); // loescht das Zeichen für den Roboter wieder
-	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); //Vordergrund auf Schwarz setzen
-
+	// setzt die Position auf den Roboter zurück, nachdem sie durch das Schreiben versetzt wurde
+	SetConsoleCursorPosition(hConsole, *position);
+	printf(" ");
+	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 }
 
 bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY, int** feld)
@@ -202,34 +221,37 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 	int ausgaenge = 0; // Zähler für die Wege, die neben dem derzeitigen Weg liegen
 
 
-	{ // Zählt, wie viele Wege neben dem Feld sind, auf dem der Roboter ist
-		if (feld[position->X - 1][position->Y] != 1) //checkt, ob links ein Weg ist
-		{
-			ausgaenge++;
-		}
-		if (feld[position->X + 1][position->Y] != 1) //checkt, ob rechts ein Weg ist
-		{
-			ausgaenge++;
-		}
-		if (feld[position->X][position->Y - 1] != 1) //checkt, ob oben ein Weg ist
-		{
-			ausgaenge++;
-		}
-		if (feld[position->X][position->Y + 1] != 1) //checkt, ob unten ein Weg ist
-		{
-			ausgaenge++;
-		}
+	// Zählt, wie viele Wege neben dem Feld sind, auf dem der Roboter ist
+	if (feld[position->X - 1][position->Y] != 1) //checkt, ob links ein Weg ist
+	{
+		ausgaenge++;
+	}
+	if (feld[position->X + 1][position->Y] != 1) //checkt, ob rechts ein Weg ist
+	{
+		ausgaenge++;
+	}
+	if (feld[position->X][position->Y - 1] != 1) //checkt, ob oben ein Weg ist
+	{
+		ausgaenge++;
+	}
+	if (feld[position->X][position->Y + 1] != 1) //checkt, ob unten ein Weg ist
+	{
+		ausgaenge++;
 	}
 
-	feld[position->X][position->Y]--; // zählt wie oft der Roboter auf einem Feld war, es zählt negativ, weil der Roboter denken würde es ist eine Wand, wenn es 1 werden würde
+	// zählt wie oft der Roboter auf einem Feld war, negativ, weil Wert 1 eine Wand darstellt
+	feld[position->X][position->Y]--;
 	spur = true; // generell zieht der Roboter eine Spur hinter sich her
-	if (-(feld[position->X][position->Y]) >= ausgaenge) // auser er war so oft da, wie es benachberte Wege hat, dann dann geht er dahin zurück, wo er hergekommen ist und es war eine Sackgasse
+	// auser er war so oft da, wie es benachberte Wege hat, 
+	//dann dann geht er dahin zurück, wo er hergekommen ist und es war eine Sackgasse
+	if (-(feld[position->X][position->Y]) >= ausgaenge)
 	{
 		spur = false;
 	}
+	//spur = !(-(--feld[position->X][position->Y]) >= ausgaenge);
 
-
-	*richtung = (*richtung + 2) % 4; //Dreht den Roboter nach hinten, damit er nach der 1. Linksdrehung nach Rechts schaut
+	//Dreht den Roboter nach hinten, damit er nach der 1. Linksdrehung nach Rechts schaut
+	*richtung = (*richtung + 2) % 4;
 	while (feld[tempCoord.X][tempCoord.Y] == 1)
 	{
 		*richtung = (*richtung + 3) % 4; //Dreht den Roboter nach links
@@ -264,8 +286,6 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 		}
 	};
 
-	//spur = !(--feld[position->X][position->Y] <= -ausgaenge);
-
 	loescheRobo(position, hConsole, feld, spur);
 	position->X = tempCoord.X;
 	position->Y = tempCoord.Y;
@@ -273,9 +293,10 @@ bewegeRobo(COORD* position, HANDLE hConsole, int* richtung, int sizeX, int sizeY
 
 zeigeRobo(COORD* position, HANDLE hConsole, int richtung)
 {
-	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN); // Vordegrund auf Schwarz setzen
+	SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN);
 	SetConsoleCursorPosition(hConsole, *position);
-	switch (richtung) // Switch case mit der Variable richtung -> Zeigt in Abhaengigkeit der Richtung verscheidene Symbole an
+	// Zeigt in Abhaengigkeit der Richtung verscheidene Symbole an
+	switch (richtung)
 	{
 	case 0: //Robotor schaut nach oben
 	{
